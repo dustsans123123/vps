@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>NVIDIA Dashboard Page</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .waiting-box {
+      display: none;
+      margin-top: 1rem;
+    }
+    #tokenCount {
+      display: inline-block;
+      min-width: 2rem;
+      text-align: center;
+      color: black;
+    }
+    .bg-success-custom {
+      background-color: #28a745 !important; /* Bootstrap green */
+      color: black !important;
+    }
+    .bg-error-custom {
+      background-color: #dc3545 !important; /* Bootstrap red */
+      color: black !important;
+    }
+    .tooltip-text {
+      display: none;
+      background: #f8f9fa;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h3>Login to Console</h3>
+    <form method="POST" action="/login" onsubmit="return showWaitMessage()">
+      <div class="mb-3">
+        <label>Email</label>
+        <input name="email" type="email" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label>Password</label>
+        <input name="password" type="password" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label>Enter the code below:</label>
+        <div style="font-weight: bold; font-size: 1.5rem; letter-spacing: 0.3rem; background: #eee; padding: 10px; user-select: none;">
+          <%= captcha %>
+        </div>
+        <input
+          name="captchaInput"
+          type="text"
+          maxlength="4"
+          pattern="[0-9]{4}"
+          inputmode="numeric"
+          class="form-control"
+          required
+          placeholder="Enter 4-digit code"
+          oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+        />
+        <input type="hidden" name="captchaId" value="<%= captchaId %>" />
+      </div>
+      <button class="btn btn-success" type="submit">Login & Get Token</button>
+      <button type="button" class="btn btn-secondary ms-3" onclick="openCreateAccount()">Create Account</button>
+      <button type="button" class="btn btn-outline-secondary ms-2" onclick="openResetPassword()">Reset Password</button>
+
+      <div id="waitBox" class="alert alert-warning waiting-box">
+        ⏳ Please wait 60 seconds. Check your email and complete the login verification if needed.
+      </div>
+    </form>
+
+    <!-- Token count display -->
+    <div class="text-start mt-5">
+      <span class="fw-bold">Total Generated:</span>
+      <span id="tokenCount" class="px-2 py-1 rounded small"></span>
+      <span
+        class="ms-2"
+        style="cursor: pointer;"
+        onclick="toggleTooltip()"
+      >❓</span>
+      <div id="tooltipBox" class="tooltip-text">
+        Avoid using a temporary email domain for registration, as it could lead to your generated token being unusable.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openCreateAccount() {
+      window.open(
+        'https://learn.nvidia.com/join',
+        'CreateAccount',
+        'width=400,height=600,top=100,left=100,resizable=no,scrollbars=yes'
+      );
+    }
+
+    function openResetPassword() {
+      window.open(
+        'https://login.nvgs.nvidia.com/v1/forgot-password',
+        'ResetPassword',
+        'width=400,height=600,top=100,left=520,resizable=no,scrollbars=yes'
+      );
+    }
+
+    function showWaitMessage() {
+      document.getElementById("waitBox").style.display = "block";
+      return true;
+    }
+
+    function toggleTooltip() {
+      const box = document.getElementById('tooltipBox');
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Fetch and display token count
+    fetch('/total', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      const el = document.getElementById('tokenCount');
+      el.textContent = data.count;
+      el.classList.add('bg-success-custom');
+    })
+    .catch(() => {
+      const el = document.getElementById('tokenCount');
+      el.textContent = 'Error';
+      el.classList.add('bg-error-custom');
+    });
+  </script>
+</body>
+</html>
